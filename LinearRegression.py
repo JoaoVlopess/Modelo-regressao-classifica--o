@@ -44,8 +44,7 @@ class LinearRegression:
             I[0, 0] = 0
         self.beta_hat = np.linalg.inv(
             self.X_train.T @ self.X_train + self.lambda_ * I) @ self.X_train.T @ self. y_train
-        bp = 1  # vi no código do cirillo e não entendi muito bem
-
+        
     def predict(self, X_test):
         X_test = np.array(X_test, dtype=float)
         if X_test.ndim == 1:
