@@ -1,6 +1,7 @@
+from matplotlib.colors import ListedColormap
 import numpy as np
 import matplotlib.pyplot as plt
-from Classification import GaussianClassifier
+from Classification import GaussianClassifier, GaussianClassifierSharedCov
 from LinearRegression import MeanModel
 from LinearRegression import LinearRegression
 from LinearRegression import TrainTest
@@ -24,10 +25,10 @@ classes_nomes = [
 ]
 
 cores = [
-    'magenta',
-    'lime',
-    'teal',
+    'red',
     'blue',
+    'green',
+    'orange',
     'yellow'
 ]
 
@@ -68,7 +69,7 @@ Z_pred = Z_pred.reshape(xx.shape)
 
 plt.figure(figsize=(10, 7))
 
-plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='viridis')
+plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='rainbow')
 
 for i, classe in enumerate(classes):
     indices = (z == classe)
@@ -78,4 +79,37 @@ plt.title('Fronteiras de Decisão - Classificador Gaussiano tradicional')
 plt.xlabel('Sensor 1')
 plt.ylabel('Sensor 2')
 plt.legend()
+
+clf_linear = GaussianClassifierSharedCov()
+clf_linear.fit(X_M, z)
+
+
+x_min, x_max = X_M[:, 0].min() - 100, X_M[:, 0].max() + 100
+y_min, y_max = X_M[:, 1].min() - 100, X_M[:, 1].max() + 100
+
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 50),
+                     np.arange(y_min, y_max, 50))
+
+grid_points = np.c_[xx.ravel(), yy.ravel()]
+
+Z_pred = clf_linear.predict(grid_points)
+Z_pred = Z_pred.reshape(xx.shape)
+
+plt.figure(figsize=(12, 8))
+
+plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='rainbow' )
+
+for i, classe in enumerate(classes):
+    indices = (z == classe)
+    plt.scatter(x1[indices], x2[indices], 
+                c=cores[i], 
+                label=classes_nomes[i], 
+                edgecolors='k', 
+                s=20) 
+
+plt.title('Fronteiras de Decisão Lineares (Covariâncias Iguais)')
+plt.xlabel('Sensor 1')
+plt.ylabel('Sensor 2')
+plt.legend(loc='upper right')
+plt.grid(True, linestyle='--', alpha=0.5)
 plt.show()
