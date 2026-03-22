@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from Classification import GaussianClassifier
 from LinearRegression import MeanModel
 from LinearRegression import LinearRegression
 from LinearRegression import TrainTest
@@ -10,6 +11,26 @@ data = np.loadtxt("./data/EMGsDataset (2).csv",delimiter=',').T
 N = data.shape[0]
 C = 5
 y_original = data[:,-1:]
+z = y_original.flatten()
+classes = [1,2,3,4,5]
+
+
+classes_nomes = [
+    'Neutro',
+    'Sorriso',
+    'Sobrancelhas levantadas',
+    'Surpreso',
+    'Rabugento',
+]
+
+cores = [
+    'magenta',
+    'lime',
+    'teal',
+    'blue',
+    'yellow'
+]
+
 
 # Var modelo MQO
 Y_M = np.zeros((N,5))
@@ -22,19 +43,39 @@ Y_G = Y_M.T
 X_G = X_M.T
 
 fig = plt.figure(figsize=(10, 7))
-ax = fig.add_subplot(111, projection='3d')
 
-x1 = X_M[:,:-1]
-x2 = X_M[:,-1:]
-z = y_original[:].flatten()
+x1 = X_M[:,0]
+x2 = X_M[:,1]
 
-img = ax.scatter(x1, x2, z, c=z, cmap='viridis', marker='o')
-ax.set_xlabel('Sensor 1 (X1)')
-ax.set_ylabel('Sensor 2 (X2)')
-ax.set_zlabel('Classe (Y)')
-fig.colorbar(img, ax=ax, label='Classes')
+for i, classe in enumerate(classes):
+    indices = (z == classe)
+    plt.scatter(x1[indices], x2[indices], c=cores[i],label=classes_nomes[i],edgecolors='k', cmap='viridis', marker='o')
 
-plt.title('Visualização 3D dos Dados de EMG')
+plt.title('Visualização 2D dos Dados de EMG') 
+
+clf = GaussianClassifier()
+clf.fit(X_M, z)
+
+x_min, x_max = X_M[:, 0].min() - 100, X_M[:, 0].max() + 100
+y_min, y_max = X_M[:, 1].min() - 100, X_M[:, 1].max() + 100
+
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 50),
+                     np.arange(y_min, y_max, 50))
+
+grid_points = np.c_[xx.ravel(), yy.ravel()]
+Z_pred = clf.predict(grid_points)
+Z_pred = Z_pred.reshape(xx.shape)
+
+plt.figure(figsize=(10, 7))
+
+plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='viridis')
+
+for i, classe in enumerate(classes):
+    indices = (z == classe)
+    plt.scatter(x1[indices], x2[indices], c=cores[i], label=classes_nomes[i], edgecolors='k')
+
+plt.title('Fronteiras de Decisão - Classificador Gaussiano tradicional')
+plt.xlabel('Sensor 1')
+plt.ylabel('Sensor 2')
+plt.legend()
 plt.show()
- 
-
