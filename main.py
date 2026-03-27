@@ -88,7 +88,7 @@ resultados = {
 }
 
 for _ in range(R):
-    X_train, X_test, y_train, y_test = TT.train_test_split(X, y)
+    X_train, y_train, X_test, y_test = TT.train_test_split(X, y)
 
     # 1. MeanModel
     modelo_mean = MeanModel(y_train)
@@ -137,3 +137,109 @@ for _ in range(R):
 
     resultados['Tikhonov_1.00']['MSE'].append(TT.mean_squared_error(y_test, y_pred))
     resultados['Tikhonov_1.00']['R2'].append(TT.r2_score(y_test, y_pred))
+
+# =========================
+# RESUMO ESTATÍSTICO
+# =========================
+
+resumo_mse = {}
+resumo_r2 = {}
+
+for modelo, metricas in resultados.items():
+    mse_vals = np.array(metricas['MSE'])
+    r2_vals = np.array(metricas['R2'])
+
+    resumo_mse[modelo] = {
+        'media': np.mean(mse_vals),
+        'desvio': np.std(mse_vals),
+        'maior': np.max(mse_vals),
+        'menor': np.min(mse_vals)
+    }
+
+    resumo_r2[modelo] = {
+        'media': np.mean(r2_vals),
+        'desvio': np.std(r2_vals),
+        'maior': np.max(r2_vals),
+        'menor': np.min(r2_vals)
+    }
+
+# =========================
+# TABELA 1 - MSE
+# =========================
+
+print("\n" + "="*90)
+print("TABELA RESUMO - MSE")
+print("="*90)
+print(f"{'Modelo':<20} {'Média':<12} {'Desvio-Padrão':<18} {'Maior Valor':<15} {'Menor Valor':<15}")
+
+for modelo, stats in resumo_mse.items():
+    print(f"{modelo:<20} {stats['media']:<12.4f} {stats['desvio']:<18.4f} {stats['maior']:<15.4f} {stats['menor']:<15.4f}")
+
+# =========================
+# TABELA 2 - R²
+# =========================
+
+print("\n" + "="*90)
+print("TABELA RESUMO - R²")
+print("="*90)
+print(f"{'Modelo':<20} {'Média':<12} {'Desvio-Padrão':<18} {'Maior Valor':<15} {'Menor Valor':<15}")
+
+for modelo, stats in resumo_r2.items():
+    print(f"{modelo:<20} {stats['media']:<12.4f} {stats['desvio']:<18.4f} {stats['maior']:<15.4f} {stats['menor']:<15.4f}")
+
+# =========================
+# GRÁFICO 1 - MÉDIA DO MSE
+# =========================
+
+modelos = list(resultados.keys())
+medias_mse = [resumo_mse[modelo]['media'] for modelo in modelos]
+desvios_mse = [resumo_mse[modelo]['desvio'] for modelo in modelos]
+
+plt.figure(figsize=(12, 6))
+plt.bar(modelos, medias_mse, yerr=desvios_mse, capsize=5)
+plt.title("Comparação entre Modelos - MSE Médio")
+plt.ylabel("MSE")
+plt.xticks(rotation=45)
+plt.tight_layout()
+
+# =========================
+# GRÁFICO 2 - MÉDIA DO R²
+# =========================
+
+medias_r2 = [resumo_r2[modelo]['media'] for modelo in modelos]
+desvios_r2 = [resumo_r2[modelo]['desvio'] for modelo in modelos]
+
+plt.figure(figsize=(12, 6))
+plt.bar(modelos, medias_r2, yerr=desvios_r2, capsize=5)
+plt.title("Comparação entre Modelos - R² Médio")
+plt.ylabel("R²")
+plt.xticks(rotation=45)
+plt.tight_layout()
+
+# =========================
+# GRÁFICO 3 - DISTRIBUIÇÃO DO MSE
+# =========================
+
+dados_mse = [resultados[modelo]['MSE'] for modelo in modelos]
+
+plt.figure(figsize=(12, 6))
+plt.boxplot(dados_mse, tick_labels=modelos)
+plt.title("Distribuição do MSE por Modelo")
+plt.ylabel("MSE")
+plt.xticks(rotation=45)
+plt.tight_layout()
+
+# =========================
+# GRÁFICO 4 - DISTRIBUIÇÃO DO R²
+# =========================
+
+dados_r2 = [resultados[modelo]['R2'] for modelo in modelos]
+
+plt.figure(figsize=(12, 6))
+plt.boxplot(dados_r2, tick_labels=modelos)
+plt.title("Distribuição do R² por Modelo")
+plt.ylabel("R²")
+plt.xticks(rotation=45)
+plt.tight_layout()
+
+plt.show()
