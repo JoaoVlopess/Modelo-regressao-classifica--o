@@ -7,7 +7,7 @@ from LinearRegression import TrainTest
 
 
 # REGRESSÃO parte 1/2
-data = np.loadtxt('C:\\Users\\Samsung\\OneDrive\\Área de Trabalho\\Programação\\IA\\Trabalho\\Modelo-regressao-classifica--o\\data\\aerogerador (1).dat')
+data = np.loadtxt('data/aerogerador (1).dat')
 X = data[:,:-1]
 y = data[:,-1:]
 x_line = np.linspace(X.min(), X.max(), 100).reshape(-1, 1)
