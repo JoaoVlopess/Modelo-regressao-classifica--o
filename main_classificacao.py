@@ -1,115 +1,76 @@
-from matplotlib.colors import ListedColormap
 import numpy as np
 import matplotlib.pyplot as plt
-from Classification import GaussianClassifier, GaussianClassifierSharedCov
-from LinearRegression import MeanModel
-from LinearRegression import LinearRegression
-from LinearRegression import TrainTest
+from matplotlib.colors import ListedColormap
+from Classification import (GaussianClassifier, GaussianClassifierFriedman, 
+                            GaussianClassifierPooledCovarianceMatrix, 
+                            GaussianClassifierSharedCov)
 
-# Dados com problemas de load no quesito shape (Tive que colocar a transposta)
-data = np.loadtxt("./data/EMGsDataset (2).csv",delimiter=',').T 
 
-N = data.shape[0]
-C = 5
-y_original = data[:,-1:]
+data = np.loadtxt("./data/EMGsDataset (2).csv", delimiter=',').T 
+X_M = data[:, :-1]
+y_original = data[:, -1:]
 z = y_original.flatten()
-classes = [1,2,3,4,5]
 
-
+classes = [1, 2, 3, 4, 5]
 classes_nomes = [
-    'Neutro',
-    'Sorriso',
-    'Sobrancelhas levantadas',
-    'Surpreso',
-    'Rabugento',
-]
+    'Neutro', 
+    'Sorriso', 
+    'Sobrancelhas levantadas', 
+    'Surpreso', 
+    'Rabugento'
+    ]
 
 cores = [
-    'red',
-    'blue',
-    'green',
-    'orange',
+    'red', 
+    'blue', 
+    'green', 
+    'orange', 
     'yellow'
+    ]
+
+meu_cmap = ListedColormap(cores)
+
+
+def plot_decision_boundaries(model, X, y, title):
+    """Gera o gráfico de fronteiras para qualquer modelo passado."""
+    x_min, x_max = X[:, 0].min() - 100, X[:, 0].max() + 100
+    y_min, y_max = X[:, 1].min() - 100, X[:, 1].max() + 100
+    
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 50),
+                         np.arange(y_min, y_max, 50))
+    
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    Z_pred = model.predict(grid_points)
+    Z_pred = Z_pred.reshape(xx.shape)
+    
+    plt.figure(figsize=(10, 7))
+    plt.contourf(xx, yy, Z_pred, alpha=0.2, cmap=meu_cmap)
+    
+    for i, classe in enumerate(classes):
+        idx = (y == classe)
+        plt.scatter(X[idx, 0], X[idx, 1], c=cores[i], label=classes_nomes[i], 
+                    edgecolors='k', s=25, alpha=0.8)
+    
+    plt.title(title)
+    plt.xlabel('Sensor 1')
+    plt.ylabel('Sensor 2')
+    plt.legend(loc='upper right')
+    plt.grid(True, linestyle='--', alpha=0.3)
+
+meu_lambda = 0.5
+
+modelos = [
+    (GaussianClassifier(), 'Classificador Gaussiano Tradicional'),
+    (GaussianClassifierSharedCov(), 'Classificador Gaussiano com Covariâncias Iguais'),
+    (GaussianClassifierPooledCovarianceMatrix(), 'Classificador Gaussiano com Matriz de Covariância Agregada'), 
+    (GaussianClassifierFriedman(), 'Classificador Gaussiano Friedman')
 ]
 
+for clf, nome in modelos:
+    if isinstance(clf, GaussianClassifierFriedman):
+        clf.fit(X_M, z, lamb=meu_lambda)
+    else:
+        clf.fit(X_M, z)
+    plot_decision_boundaries(clf, X_M, z, nome)
 
-# Var modelo MQO
-Y_M = np.zeros((N,5))
-indices_colunas = y_original.astype(int).flatten() - 1
-Y_M[np.arange(N), indices_colunas] = 1
-X_M = np.array(data[:,:-1])
-
-# Var modelo Gaussiano
-Y_G = Y_M.T
-X_G = X_M.T
-
-fig = plt.figure(figsize=(10, 7))
-
-x1 = X_M[:,0]
-x2 = X_M[:,1]
-
-for i, classe in enumerate(classes):
-    indices = (z == classe)
-    plt.scatter(x1[indices], x2[indices], c=cores[i],label=classes_nomes[i],edgecolors='k', cmap='viridis', marker='o')
-
-plt.title('Visualização 2D dos Dados de EMG') 
-
-clf = GaussianClassifier()
-clf.fit(X_M, z)
-
-x_min, x_max = X_M[:, 0].min() - 100, X_M[:, 0].max() + 100
-y_min, y_max = X_M[:, 1].min() - 100, X_M[:, 1].max() + 100
-
-xx, yy = np.meshgrid(np.arange(x_min, x_max, 50),
-                     np.arange(y_min, y_max, 50))
-
-grid_points = np.c_[xx.ravel(), yy.ravel()]
-Z_pred = clf.predict(grid_points)
-Z_pred = Z_pred.reshape(xx.shape)
-
-plt.figure(figsize=(10, 7))
-
-plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='rainbow')
-
-for i, classe in enumerate(classes):
-    indices = (z == classe)
-    plt.scatter(x1[indices], x2[indices], c=cores[i], label=classes_nomes[i], edgecolors='k')
-
-plt.title('Fronteiras de Decisão - Classificador Gaussiano tradicional')
-plt.xlabel('Sensor 1')
-plt.ylabel('Sensor 2')
-plt.legend()
-
-clf_linear = GaussianClassifierSharedCov()
-clf_linear.fit(X_M, z)
-
-
-x_min, x_max = X_M[:, 0].min() - 100, X_M[:, 0].max() + 100
-y_min, y_max = X_M[:, 1].min() - 100, X_M[:, 1].max() + 100
-
-xx, yy = np.meshgrid(np.arange(x_min, x_max, 50),
-                     np.arange(y_min, y_max, 50))
-
-grid_points = np.c_[xx.ravel(), yy.ravel()]
-
-Z_pred = clf_linear.predict(grid_points)
-Z_pred = Z_pred.reshape(xx.shape)
-
-plt.figure(figsize=(12, 8))
-
-plt.contourf(xx, yy, Z_pred, alpha=0.3, cmap='rainbow' )
-
-for i, classe in enumerate(classes):
-    indices = (z == classe)
-    plt.scatter(x1[indices], x2[indices], 
-                c=cores[i], 
-                label=classes_nomes[i], 
-                edgecolors='k', 
-                s=20) 
-
-plt.title('Fronteiras de Decisão Lineares (Covariâncias Iguais)')
-plt.xlabel('Sensor 1')
-plt.ylabel('Sensor 2')
-plt.legend(loc='upper right')
-plt.grid(True, linestyle='--', alpha=0.5)
 plt.show()
