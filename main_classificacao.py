@@ -93,10 +93,14 @@ plt.show()
 
 
 for clf, nome in modelos:
-    if isinstance(clf, GaussianClassifierFriedman):
-        clf.fit(X_M, z, lamb=meu_lambda)
-    else:
+    if isinstance(clf, MQOClassifier):
         clf.fit(X_M, z)
+    else:
+        if isinstance(clf, GaussianClassifierFriedman):
+            clf.fit(X_M.T, z, lamb=meu_lambda)
+        else:
+            clf.fit(X_M.T, z)
+            
     plot_decision_boundaries(clf, X_M, z, nome)
 
 plt.show()
