@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-from Classification import (GaussianClassifier, GaussianClassifierFriedman, 
+from Classification import (BayesClassifier, GaussianClassifier, GaussianClassifierFriedman, 
                             GaussianClassifierPooledCovarianceMatrix, 
                             GaussianClassifierSharedCov)
 
@@ -63,8 +63,32 @@ modelos = [
     (GaussianClassifier(), 'Classificador Gaussiano Tradicional'),
     (GaussianClassifierSharedCov(), 'Classificador Gaussiano com Covariâncias Iguais'),
     (GaussianClassifierPooledCovarianceMatrix(), 'Classificador Gaussiano com Matriz de Covariância Agregada'), 
-    (GaussianClassifierFriedman(), 'Classificador Gaussiano Friedman')
+    (GaussianClassifierFriedman(), 'Classificador Gaussiano Friedman'),
+    (BayesClassifier(), 'Classificador de Bayes Ingênuo')
 ]
+
+sensor1 = X_M[:, 0]
+sensor2 = X_M[:, 1]
+
+for i, classe in enumerate(classes):
+
+    indices = (z == classe)
+    
+    plt.scatter(sensor1[indices],
+                sensor2[indices],
+                c=cores[i],
+                label=classes_nomes[i],
+                edgecolors='k',
+                alpha=0.6,       
+                s=20)           
+
+plt.title('Distribuição dos Sinais de EMG por Classe')
+plt.xlabel('Sensor 1')
+plt.ylabel('Sensor 2')
+plt.legend(loc='upper right')
+plt.grid(True, linestyle='--', alpha=0.3)
+plt.show()
+
 
 for clf, nome in modelos:
     if isinstance(clf, GaussianClassifierFriedman):

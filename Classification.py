@@ -236,5 +236,65 @@ class GaussianClassifierFriedman:
                 
                 predictions.append(self.classes[np.argmax(posteriors)])
             return np.array(predictions)
+    
+
+class  BayesClassifier:
+    def __init__(self):
+        self.means = []
+        self.priors = []
+        self.covs = []
+        self.classes = None
+
+    def fit(self, X, y,):
+        self.classes = np.unique(y) 
+        N, p = X.shape
+
+        for c in self.classes:
+            X_j = X[y.flatten() == c]
+            
+            self.means.append(np.mean(X_j, axis=0))
+            self.priors.append(X_j.shape[0] / N)
+
+            variancias = np.var(X_j, axis=0)
+            matrix_diagonal = np.diag(variancias)
+
+            matrix_diagonal += np.eye(p) * 1e-6
+
+            self.covs.append(matrix_diagonal)
+
+    def _pdf(self, x, mu, sigma):
+        p = len(mu)
+
+        det_sigma = np.linalg.det(sigma)
+        inv_sigma = np.linalg.inv(sigma)
+
+        diff = x - mu
+
+        exponent = -0.5 * (diff @ inv_sigma @ diff.T)
+
+        norm = 1 / (np.sqrt((2 * np.pi)**p * det_sigma))
+
+        return norm * np.exp(exponent)
+    
+    def predict(self, X_test):
+        predictions = []
+        
+        
+        for x in X_test:
+            posteriors = []
+            
+            for i in range(len(self.classes)):
+                
+                prob = self._pdf(x, self.means[i], self.covs[i]) * self.priors[i]
+                posteriors.append(prob)
+            
+            
+            idx_max = np.argmax(posteriors)
+            predictions.append(self.classes[idx_max])
+            
+        return np.array(predictions)
+
+
+
 
     
