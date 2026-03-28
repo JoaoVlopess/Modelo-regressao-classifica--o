@@ -1,5 +1,50 @@
 import numpy as np
 
+class MQOClassifier:
+    def init(self):
+        self.beta = None
+        self.classes = None
+
+    def _one_hot(self, y):
+        y = y.flatten()
+        self.classes = np.unique(y)
+        N = len(y)
+        C = len(self.classes)
+
+        Y = np.zeros((N, C))
+
+        for i, c in enumerate(self.classes):
+            Y[y == c, i] = 1
+
+        return Y
+
+    def fit(self, X, y):
+        X = np.array(X, dtype=float)
+        y = np.array(y).flatten()
+
+        Y = self._one_hot(y)
+
+        N = X.shape[0]
+        X_aug = np.hstack((np.ones((N, 1)), X))
+
+        # Usando pseudoinversa para maior estabilidade numérica
+        self.beta = np.linalg.pinv(X_aug) @ Y
+
+    def predict(self, X_test):
+        X_test = np.array(X_test, dtype=float)
+        if X_test.ndim == 1:
+            X_test = X_test.reshape(1, -1)
+
+        N = X_test.shape[0]
+        X_test_aug = np.hstack((np.ones((N, 1)), X_test))
+
+        scores = X_test_aug @ self.beta
+        idx = np.argmax(scores, axis=1)
+
+        return self.classes[idx]
+
+
+
 class GaussianClassifier:
     def __init__(self):
         self.means = []

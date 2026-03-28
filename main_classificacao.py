@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from Classification import (BayesClassifier, GaussianClassifier, GaussianClassifierFriedman, 
                             GaussianClassifierPooledCovarianceMatrix, 
-                            GaussianClassifierSharedCov)
+                            GaussianClassifierSharedCov, MQOClassifier)
 
 
 data = np.loadtxt("./data/EMGsDataset (2).csv", delimiter=',').T 
@@ -60,6 +60,7 @@ def plot_decision_boundaries(model, X, y, title):
 meu_lambda = 0.5
 
 modelos = [
+    (MQOClassifier(), 'Classificador MQO'),
     (GaussianClassifier(), 'Classificador Gaussiano Tradicional'),
     (GaussianClassifierSharedCov(), 'Classificador Gaussiano com Covariâncias Iguais'),
     (GaussianClassifierPooledCovarianceMatrix(), 'Classificador Gaussiano com Matriz de Covariância Agregada'), 
