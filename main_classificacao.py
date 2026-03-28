@@ -7,6 +7,7 @@ from Classification import (BayesClassifier, GaussianClassifier, GaussianClassif
 
 
 data = np.loadtxt("./data/EMGsDataset (2).csv", delimiter=',').T 
+qnt_amostras = data.shape[0]
 X_M = data[:, :-1]
 y_original = data[:, -1:]
 z = y_original.flatten()
@@ -99,3 +100,41 @@ for clf, nome in modelos:
     plot_decision_boundaries(clf, X_M, z, nome)
 
 plt.show()
+
+
+def calculate_accuracy(real, predicts):
+    return np.mean(real == predicts)
+
+
+def validation_monte_carlo(model ,X , y_z, rodadas=500):
+    qnt_amostras = data.shape[0]
+    corte = int(qnt_amostras*0.8)
+    accuracy_list = []
+
+    for i in range(rodadas):
+        indexes = np.random.permutation(qnt_amostras)
+
+        idx_train = indexes[:corte]
+        idx_test = indexes[corte:]
+
+        X_train, y_train = X[idx_train], y_z[idx_train]
+        X_test, y_test = X[idx_test], y_z[idx_test]
+
+        if isinstance(model, GaussianClassifierFriedman):
+            model.fit(X_train, y_train, lamb=meu_lambda)
+        else:
+            model.fit(X_train, y_train)
+
+        predicts = model.predict(X_test)
+
+        accuracy = calculate_accuracy(y_test, predicts)
+        accuracy_list.append(accuracy)
+
+    return np.mean(accuracy_list), np.std(accuracy_list)
+
+for clf, nome in modelos:
+    mean, dp = validation_monte_carlo(clf, X_M, z)
+    
+    print(f"Modelo: {nome:45} | Acurácia: {mean*100:6.2f}% (+/- {dp*100:.2f}%)")
+
+
