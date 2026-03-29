@@ -251,31 +251,3 @@ for model_class, nome in modelos:
     }
 
     print(f"{nome:<65} {media:<10.4f} {desvio:<15.4f} {maior:<12.4f} {menor:<12.4f}")
-
-# ==============================
-#  GRÁFICO DE BARRAS
-# ==============================
-nomes_modelos = list(resultados_finais.keys())
-medias = [resultados_finais[n]['media'] for n in nomes_modelos]
-desvios = [resultados_finais[n]['desvio'] for n in nomes_modelos]
-
-plt.figure(figsize=(12, 6))
-plt.bar(nomes_modelos, medias, yerr=desvios, capsize=5)
-plt.xticks(rotation=45, ha='right')
-plt.ylabel("Acurácia")
-plt.title("Comparação dos Modelos de Classificação")
-plt.tight_layout()
-plt.show()
-
-# ==============================
-#  BOXPLOT DAS ACURÁCIAS
-# ==============================
-dados_boxplot = [resultados_finais[n]['accs'] for n in nomes_modelos]
-
-plt.figure(figsize=(12, 6))
-plt.boxplot(dados_boxplot, tick_labels=nomes_modelos)
-plt.xticks(rotation=45, ha='right')
-plt.ylabel("Acurácia")
-plt.title("Distribuição das Acurácias por Modelo")
-plt.tight_layout()
-plt.show()
