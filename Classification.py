@@ -1,7 +1,7 @@
 import numpy as np
 
 class MQOClassifier:
-    def init(self):
+    def __init__(self):
         self.beta = None
         self.classes = None
 
@@ -56,6 +56,9 @@ class GaussianClassifier:
         """
         Calcula os parâmetros estatísticos (mi, sigma, prior) para cada classe.
         """
+        self.means = []
+        self.covs = []
+        self.priors = []
         self.classes = np.unique(y) 
         N = X.shape[0]
 
@@ -229,8 +232,13 @@ class GaussianClassifierFriedman:
         self.classes = None
 
     def fit(self, X, y, lamb):
-        self.classes = np.unique(y) 
+        self.means = []
+        self.priors = []
+        self.covs = []
+
+        self.classes = np.unique(y)
         N, p = X.shape
+
         all_covs = []
         individual_covs = []
         temp_n_j = []
@@ -239,15 +247,20 @@ class GaussianClassifierFriedman:
             X_j = X[y.flatten() == c]
             n_j = X_j.shape[0]
             temp_n_j.append(n_j)
-            
+
             self.means.append(np.mean(X_j, axis=0))
-            self.priors.append(X_j.shape[0] / N)
+            self.priors.append(n_j / N)
 
-            c_cov = np.cov(X_j, rowvar=False)
+            if n_j <= 1:
+                c_cov = np.eye(p) * 1e-6
+            else:
+                c_cov = np.cov(X_j, rowvar=False)
+
+            c_cov += np.eye(p) * 1e-6
+
             individual_covs.append(c_cov)
-
             all_covs.append(c_cov * (n_j - 1))
-        
+
         self.matrix_cov = sum(all_covs) / (N - len(self.classes))
         self.matrix_cov += np.eye(p) * 1e-6
 
@@ -256,20 +269,29 @@ class GaussianClassifierFriedman:
             n_j = temp_n_j[i]
             ind_cov = individual_covs[i]
 
-            friedman_covs.append(((1-lamb) * (n_j * ind_cov) + (N * lamb *  self.matrix_cov)) / ((1-lamb) * n_j + (lamb * N) ))
+            sigma_f = (
+                ((1 - lamb) * (n_j * ind_cov) + (N * lamb * self.matrix_cov)) /
+                ((1 - lamb) * n_j + lamb * N)
+            )
+
+            sigma_f += np.eye(p) * 1e-6
+            friedman_covs.append(sigma_f)
 
         self.covs = friedman_covs
 
     def _pdf(self, x, mu, sigma):
-            p = len(mu)
-            det_sigma = np.linalg.det(sigma)
-            inv_sigma = np.linalg.inv(sigma)
-            
-            diff = x - mu
-            exponent = -0.5 * (diff @ inv_sigma @ diff.T)
-            norm = 1 / (np.sqrt((2 * np.pi)**p * det_sigma))
-            
-            return norm * np.exp(exponent)
+        p = len(mu)
+
+        sigma = sigma + np.eye(p) * 1e-6
+
+        det_sigma = np.linalg.det(sigma)
+        inv_sigma = np.linalg.inv(sigma)
+
+        diff = x - mu
+        exponent = -0.5 * (diff @ inv_sigma @ diff.T)
+        norm = 1 / np.sqrt((2 * np.pi)**p * det_sigma)
+
+        return norm * np.exp(exponent)
     
     def predict(self, X_test):
             predictions = []
@@ -310,14 +332,14 @@ class  BayesClassifier:
     def _pdf(self, x, mu, sigma):
         p = len(mu)
 
+        sigma = sigma + np.eye(p) * 1e-6
+
         det_sigma = np.linalg.det(sigma)
         inv_sigma = np.linalg.inv(sigma)
 
         diff = x - mu
-
         exponent = -0.5 * (diff @ inv_sigma @ diff.T)
-
-        norm = 1 / (np.sqrt((2 * np.pi)**p * det_sigma))
+        norm = 1 / np.sqrt((2 * np.pi)**p * det_sigma)
 
         return norm * np.exp(exponent)
     
